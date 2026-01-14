@@ -200,18 +200,15 @@ func (r *ContextArea) Layout(gtx C, w layout.Widget) D {
 
 		// Lay out a scrim on top of the contextual widget to detect
 		// completed interactions with it (that should dismiss it).
-		pt := pointer.PassOp{}.Push(gtx.Ops)
 		stack := clip.Rect(image.Rectangle{Max: r.dims.Size}).Push(gtx.Ops)
 		event.Op(gtx.Ops, dismissTag)
 
 		stack.Pop()
-		pt.Pop()
 		contextual = macro.Stop()
 		op.Defer(gtx.Ops, contextual)
 	}
 
 	// Capture pointer events in the contextual area.
-	defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 	defer clip.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Push(gtx.Ops).Pop()
 	event.Op(gtx.Ops, r)
 

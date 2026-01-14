@@ -215,7 +215,6 @@ func (t *TipArea) Layout(gtx C, tip Tooltip, w layout.Widget) D {
 	return layout.Stack{}.Layout(gtx,
 		layout.Stacked(w),
 		layout.Expanded(func(gtx C) D {
-			defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 			defer clip.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Push(gtx.Ops).Pop()
 			event.Op(gtx.Ops, t)
 

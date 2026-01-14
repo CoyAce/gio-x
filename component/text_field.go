@@ -10,7 +10,6 @@ import (
 	"gioui.org/gesture"
 	"gioui.org/io/input"
 	"gioui.org/io/key"
-	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -326,7 +325,6 @@ func (in *TextField) Layout(gtx C, th *material.Theme, hint string) D {
 					)
 				}),
 				layout.Expanded(func(gtx C) D {
-					defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 					defer clip.Rect(image.Rectangle{
 						Max: gtx.Constraints.Min,
 					}).Push(gtx.Ops).Pop()
