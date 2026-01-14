@@ -3,7 +3,6 @@ package component
 import (
 	"math"
 
-	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -80,7 +79,6 @@ func (g GridStyle) Layout(gtx layout.Context, rows, cols int, dimensioner outlay
 		gtx.Constraints.Max.Y -= hBarWidth
 	}
 
-	defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 	// Draw grid.
 	dim := g.State.Grid.Layout(gtx, rows, cols, dimensioner, cellFunc)
 

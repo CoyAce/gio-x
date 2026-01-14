@@ -69,7 +69,6 @@ func (n *renderNavItem) Layout(gtx layout.Context, th *material.Theme) layout.Di
 			}
 		}
 	}
-	defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 	defer clip.Rect(image.Rectangle{
 		Max: gtx.Constraints.Max,
 	}).Push(gtx.Ops).Pop()
