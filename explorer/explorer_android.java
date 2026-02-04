@@ -161,11 +161,9 @@ public class explorer_android {
     }
 
     private static Intent getIntent(String mime) {
-        boolean chooseFile = ".".equals(mime);
+        boolean chooseFile = mime == null;
         if (chooseFile) {
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.putExtra(Intent.EXTRA_MIME_TYPES, "*/*");
-            return intent;
+            return new Intent(Intent.ACTION_OPEN_DOCUMENT);
         }
         return new Intent(Intent.ACTION_GET_CONTENT);
     }
