@@ -16,6 +16,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -173,8 +174,13 @@ public class explorer_android {
         Activity activity = (Activity) view.getContext();
         ContentResolver resolver = activity.getApplicationContext().getContentResolver();
         try {
-            ParcelFileDescriptor pfd = resolver.openFileDescriptor(Uri.parse(uri), "r");
-            return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            if (uri.startsWith("content://")) {
+                ParcelFileDescriptor pfd = resolver.openFileDescriptor(Uri.parse(uri), "r");
+                return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            } else {
+                File file = new File(uri);
+                return new FileInputStream(file);
+            }
         } catch (IOException e) {
             return null;
         }
