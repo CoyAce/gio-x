@@ -8,28 +8,30 @@ import (
 	"git.wow.st/gmp/jni"
 )
 
-//go:generate javac -source 8 -target 8 -bootclasspath $ANDROID_HOME/platforms/android-36/android.jar -d $TEMP/explorer_file_android/classes file_android.java
-//go:generate jar cf file_android.jar -C $TEMP/explorer_file_android/classes .
+//go:generate javac --release 11  -classpath $ANDROID_HOME/platforms/android-36/android.jar -d /tmp/explorer_file_android/classes file_android.java
+//go:generate jar cf file_android.jar -C /tmp/explorer_file_android/classes .
 
 type File struct {
 	stream    jni.Object
 	name      string
 	size      int64
+	uri       string
 	libObject jni.Object
 	libClass  jni.Class
 
-	fileRead  jni.MethodID
-	fileWrite jni.MethodID
-	fileClose jni.MethodID
-	getError  jni.MethodID
+	fileRead     jni.MethodID
+	fileWrite    jni.MethodID
+	filePosition jni.MethodID
+	fileClose    jni.MethodID
+	getError     jni.MethodID
 
 	sharedBuffer    jni.Object
 	sharedBufferLen int
 	isClosed        bool
 }
 
-func newFile(env jni.Env, name string, size int64, stream jni.Object) (*File, error) {
-	f := &File{stream: stream, name: name, size: size}
+func newFile(env jni.Env, name string, size int64, uri string, stream jni.Object) (*File, error) {
+	f := &File{stream: stream, name: name, size: size, uri: uri}
 
 	class, err := jni.LoadClass(env, jni.ClassLoaderFor(env, jni.Object(app.AppContext())), "org/gioui/x/explorer/file_android")
 	if err != nil {
@@ -50,6 +52,7 @@ func newFile(env jni.Env, name string, size int64, stream jni.Object) (*File, er
 	f.libClass = jni.Class(jni.NewGlobalRef(env, jni.Object(class)))
 	f.fileRead = jni.GetMethodID(env, f.libClass, "fileRead", "([B)I")
 	f.fileWrite = jni.GetMethodID(env, f.libClass, "fileWrite", "([B)Z")
+	f.filePosition = jni.GetMethodID(env, f.libClass, "filePosition", "(I)Z")
 	f.fileClose = jni.GetMethodID(env, f.libClass, "fileClose", "()Z")
 	f.getError = jni.GetMethodID(env, f.libClass, "getError", "()Ljava/lang/String;")
 
@@ -60,6 +63,8 @@ func newFile(env jni.Env, name string, size int64, stream jni.Object) (*File, er
 func (f *File) Name() string { return f.name }
 
 func (f *File) Size() int64 { return f.size }
+
+func (f *File) URI() string { return f.uri }
 
 func (f *File) Read(b []byte) (n int, err error) {
 	if f == nil || f.isClosed {
@@ -117,6 +122,26 @@ func (f *File) Write(b []byte) (n int, err error) {
 		return 0, err
 	}
 	return len(b), err
+}
+
+func (f *File) Seek(offset int64, whence int) (int64, error) {
+	if whence == io.SeekCurrent || whence == io.SeekEnd {
+		return 0, ErrNotAvailable
+	}
+	err := jni.Do(jni.JVMFor(app.JavaVM()), func(env jni.Env) error {
+		ok, err := jni.CallBooleanMethod(env, f.libObject, f.filePosition, jni.Value(offset))
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return f.lastError(env)
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return offset, nil
 }
 
 func (f *File) Close() error {
