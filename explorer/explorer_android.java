@@ -16,6 +16,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -126,8 +127,8 @@ public class explorer_android {
         askPermission(view);
 
         ((Activity) view.getContext()).runOnUiThread(() -> {
-            registerFrag(view);
-            export_codes.add(Integer.valueOf(id));
+            registerFrag(view, id);
+            export_codes.add(id);
             int extIndex = filename.lastIndexOf(".") + 1;
             String ext = extIndex < filename.length() ? filename.substring(extIndex) : filename;
             final Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -142,8 +143,8 @@ public class explorer_android {
         askPermission(view);
 
         ((Activity) view.getContext()).runOnUiThread(() -> {
-            registerFrag(view);
-            import_codes.add(Integer.valueOf(id));
+            registerFrag(view, id);
+            import_codes.add(id);
 
             final Intent intent = getIntent(mime);
             intent.setType("*/*");
@@ -161,7 +162,7 @@ public class explorer_android {
     }
 
     private static Intent getIntent(String mime) {
-        boolean chooseFile = ".".equals(mime);
+        boolean chooseFile = mime == null;
         if (chooseFile) {
             return new Intent(Intent.ACTION_OPEN_DOCUMENT);
         }
@@ -173,14 +174,19 @@ public class explorer_android {
         Activity activity = (Activity) view.getContext();
         ContentResolver resolver = activity.getApplicationContext().getContentResolver();
         try {
-            ParcelFileDescriptor pfd = resolver.openFileDescriptor(Uri.parse(uri), "r");
-            return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            if (uri.startsWith("content://")) {
+                ParcelFileDescriptor pfd = resolver.openFileDescriptor(Uri.parse(uri), "r");
+                return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+            } else {
+                File file = new File(uri);
+                return new FileInputStream(file);
+            }
         } catch (IOException e) {
             return null;
         }
     }
 
-    public void registerFrag(View view) {
+    public void registerFrag(View view, int id) {
         final Context ctx = view.getContext();
         final FragmentManager fm;
 
@@ -191,12 +197,12 @@ public class explorer_android {
             return;
         }
 
-        if (fm.findFragmentByTag("explorer_android_fragment") != null) {
+        if (fm.findFragmentByTag("explorer_android_fragment" + id) != null) {
             return; // Already exists;
         }
 
         FragmentTransaction ft = fm.beginTransaction();
-        ft.add(frag, "explorer_android_fragment");
+        ft.add(frag, "explorer_android_fragment" + id);
         ft.commitNow();
     }
 

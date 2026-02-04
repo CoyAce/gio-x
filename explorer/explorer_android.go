@@ -22,7 +22,7 @@ import (
 	"git.wow.st/gmp/jni"
 )
 
-//go:generate javac --release 11  -classpath $ANDROID_HOME/platforms/android-36/android.jar -d /tmp/explorer_explorer_android/classes explorer_android.java
+//go:generate javac --release 11  -classpath $ANDROID_HOME/platforms/android-36.1/android.jar -d /tmp/explorer_explorer_android/classes explorer_android.java
 //go:generate jar cf explorer_android.jar -C /tmp/explorer_explorer_android/classes .
 
 type explorer struct {
