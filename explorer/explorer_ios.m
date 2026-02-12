@@ -17,7 +17,27 @@
         exportCallback((__bridge_retained CFTypeRef)url, self.id);
         return;
     case IMPORT_MODE:
-        importCallback((__bridge_retained CFTypeRef)url, self.id);
+        [url startAccessingSecurityScopedResource];
+
+        NSString *docDir = NSSearchPathForDirectoriesInDomains(
+            NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+        NSString *destPath = [docDir stringByAppendingPathComponent:
+            [NSUUID UUID].UUIDString];
+        destPath = [destPath stringByAppendingPathExtension:url.pathExtension];
+        NSURL *destURL = [NSURL fileURLWithPath:destPath];
+
+        NSError *error = nil;
+        [[NSFileManager defaultManager] copyItemAtURL:url
+                                                toURL:destURL
+                                                error:&error];
+
+        [url stopAccessingSecurityScopedResource];
+
+        if (!error) {
+            importCallback((__bridge_retained CFTypeRef)destURL, self.id);
+        } else {
+            importCallback((__bridge_retained CFTypeRef)url, self.id);
+        }
         return;
     }
 }
@@ -59,6 +79,9 @@ bool importFile(CFTypeRef expl, char * ext) {
 
         NSMutableArray<NSString*> *exts = [[@(ext) componentsSeparatedByString:@","] mutableCopy];
         NSMutableArray<UTType*> *contentTypes = [[NSMutableArray alloc]init];
+        if (strlen(ext) == 0){
+            [contentTypes addObject:UTTypeItem];
+        }
 
         int i;
         for (i = 0; i < [exts count]; i++) {
@@ -67,7 +90,6 @@ bool importFile(CFTypeRef expl, char * ext) {
                 [contentTypes addObject:utt];
             }
         }
-
         explorer.picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:contentTypes asCopy:true];
         explorer.picker.delegate = explorer;
         explorer.mode = IMPORT_MODE;
@@ -76,4 +98,16 @@ bool importFile(CFTypeRef expl, char * ext) {
         return YES;
     }
     return NO;
+}
+
+CFTypeRef createURLFromPath(const char* path) {
+    NSString *nsPath = [NSString stringWithUTF8String:path];
+    NSURL *url = [NSURL fileURLWithPath:nsPath];
+    return (__bridge_retained CFTypeRef)url;
+}
+
+void releaseURL(CFTypeRef url) {
+    if (url) {
+        CFRelease(url);
+    }
 }
