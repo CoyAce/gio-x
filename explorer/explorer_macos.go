@@ -7,7 +7,7 @@ package explorer
 /*
 #cgo CFLAGS: -Werror -xobjective-c -fmodules -fobjc-arc
 
-#import <Appkit/AppKit.h>
+#import <AppKit/AppKit.h>
 
 // Defined on explorer_macos.m file.
 extern void exportFile(CFTypeRef viewRef, char * name, int32_t id);
